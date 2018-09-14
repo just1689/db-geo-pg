@@ -6,13 +6,15 @@ import (
 	"os"
 	"strconv"
 	"sync/atomic"
+	"time"
 )
 
 var (
-	count                = 0
+	count         uint64 = 0
 	url                  = "https://geo-pg.captainjustin.space/transactions"
 	skip                 = 0
-	ops           uint64 = 0
+	qCount        uint64 = 0
+	pCount        uint64 = 0
 	channels      []chan *Item
 	lastChannelId = -1
 )
@@ -30,6 +32,13 @@ func Start() {
 }
 
 func Block() {
+
+	ok := true
+	for ok {
+		time.Sleep(10 * time.Second)
+		ok = qCount != pCount
+		fmt.Println("Items queued:", qCount, " and items done:", pCount)
+	}
 
 }
 
@@ -75,8 +84,7 @@ func handle(strDate string, strGeo string) {
 	}
 
 	channels[lastChannelId] <- i
-	fmt.Println("Queued an item")
-	atomic.AddUint64(&ops, 1)
+	atomic.AddUint64(&qCount, 1)
 
 }
 
@@ -90,12 +98,10 @@ type Item struct {
 
 func newItem(strDate string, strLoc string) *Item {
 
-	count++
-
 	lo, la := explode(strLoc)
 
 	i := Item{
-		Id:     strconv.Itoa(count),
+		Id:     strconv.Itoa(int(atomic.AddUint64(&count, 1))),
 		Lon:    lo,
 		Lat:    la,
 		Tim:    strDate,

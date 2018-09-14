@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync/atomic"
 )
@@ -19,14 +18,14 @@ func createWorker() chan *Item {
 		for {
 			i := <-c
 			b := marshal(i)
+
 			post(b)
-			atomic.AddUint64(&ops, 0)
-			fmt.Println("Completed an item")
+			atomic.AddUint64(&pCount, 1)
 		}
 
 	}()
 
-	fmt.Print("New worker listening!")
+	fmt.Println("New worker listening!")
 	return c
 }
 
@@ -52,6 +51,5 @@ func post(b []byte) {
 	}
 	defer resp.Body.Close()
 
-	ioutil.ReadAll(resp.Body)
-	fmt.Println(strconv.Itoa(count))
+	_, _ = ioutil.ReadAll(resp.Body)
 }
